@@ -1,17 +1,5 @@
 # -------------------------------------------------------------
-# Stage 1: Build Frontend Assets (Vite & Tailwind CSS v4)
-# -------------------------------------------------------------
-FROM node:22-bookworm-slim AS frontend
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
-# -------------------------------------------------------------
-# Stage 2: Install Composer PHP Dependencies
+# Stage 1: Install Composer PHP Dependencies
 # -------------------------------------------------------------
 FROM composer:2 AS composer
 WORKDIR /app
@@ -23,6 +11,21 @@ RUN composer install \
     --no-scripts \
     --prefer-dist \
     --optimize-autoloader
+
+# -------------------------------------------------------------
+# Stage 2: Build Frontend Assets (Vite & Tailwind CSS v4)
+# -------------------------------------------------------------
+FROM node:22-bookworm-slim AS frontend
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+# Copy vendor from composer stage so Flux UI CSS is available during build
+COPY --from=composer /app/vendor ./vendor
+
+RUN npm run build
 
 # -------------------------------------------------------------
 # Stage 3: Production Runtime with FrankenPHP (PHP 8.5)
@@ -65,6 +68,8 @@ RUN mkdir -p \
     storage/app/public/covers \
     bootstrap/cache \
     database && \
+    rm -f bootstrap/cache/*.php && \
+    php artisan package:discover --ansi && \
     chown -R www-data:www-data storage bootstrap/cache database && \
     chmod -R 775 storage bootstrap/cache database
 
@@ -74,4 +79,3 @@ RUN chmod +x /usr/local/bin/docker-entrypoint
 
 ENTRYPOINT ["docker-entrypoint"]
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
-

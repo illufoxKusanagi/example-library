@@ -8,6 +8,9 @@ else
     export SERVER_NAME=":80"
 fi
 
+# Clean stale caches and rediscover packages for production environment
+php artisan package:discover --ansi || true
+
 # Create public storage symlink if it doesn't exist
 php artisan storage:link --force || true
 
@@ -35,4 +38,3 @@ php artisan route:cache || true
 php artisan view:cache || true
 
 exec "$@"
-
