@@ -51,6 +51,7 @@ ENV APP_ENV="production"
 ENV APP_DEBUG="false"
 ENV LOG_CHANNEL="stderr"
 ENV SERVER_NAME=":80"
+ENV CADDY_GLOBAL_OPTIONS="admin off"
 
 WORKDIR /app
 
