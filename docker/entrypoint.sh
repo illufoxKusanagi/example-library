@@ -1,12 +1,11 @@
 #!/bin/sh
 set -e
 
-# Bind to the port provided by hosting environment ($PORT) or default to 80
-if [ -n "$PORT" ]; then
-    export SERVER_NAME=":${PORT}"
-else
-    export SERVER_NAME=":80"
-fi
+# Bind explicitly to 0.0.0.0 on $PORT (or 10000/80) so Render detects the open port
+PORT="${PORT:-10000}"
+export SERVER_NAME=":${PORT}"
+export CADDY_GLOBAL_OPTIONS="admin off"
+export CADDY_SERVER_EXTRA_DIRECTIVES="bind 0.0.0.0"
 
 # Use Render external URL if available and APP_URL is unset
 if [ -n "$RENDER_EXTERNAL_URL" ] && [ -z "$APP_URL" ]; then
@@ -25,10 +24,10 @@ php artisan package:discover --ansi || true
 # Create public storage symlink if it doesn't exist
 php artisan storage:link --force || true
 
-# Run database migrations and seeds (idempotent firstOrCreate)
+# Run database migrations (fast check) and optional seeds
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     php artisan migrate --force --no-interaction || true
-    if [ "${SEED_ON_DEPLOY:-true}" = "true" ]; then
+    if [ "${SEED_ON_DEPLOY:-false}" = "true" ]; then
         php artisan db:seed --force --no-interaction || true
     fi
 fi

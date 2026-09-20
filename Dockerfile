@@ -50,8 +50,11 @@ RUN setcap -r /usr/local/bin/frankenphp
 ENV APP_ENV="production"
 ENV APP_DEBUG="false"
 ENV LOG_CHANNEL="stderr"
-ENV SERVER_NAME=":80"
+ENV SERVER_NAME=":10000"
 ENV CADDY_GLOBAL_OPTIONS="admin off"
+ENV CADDY_SERVER_EXTRA_DIRECTIVES="bind 0.0.0.0"
+
+EXPOSE 10000 80
 
 WORKDIR /app
 
