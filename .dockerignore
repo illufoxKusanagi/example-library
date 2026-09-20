@@ -1,0 +1,13 @@
+.git
+.github
+.env
+.env.*
+.phpunit.cache
+node_modules
+vendor
+tests
+storage/logs/*.log
+*.log
+.DS_Store
+Thumbs.db
+

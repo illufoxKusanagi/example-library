@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600" fill="none">
+    <rect width="400" height="600" fill="#27272a" rx="8"/>
+    <rect x="20" y="20" width="360" height="560" stroke="#3f3f46" stroke-width="2" stroke-dasharray="8 8" rx="6"/>
+    <g transform="translate(150, 240)">
+        <path d="M12 60V12a6 6 0 0 1 6-6h70a6 6 0 0 1 6 6v48M12 60l44-8 44 8M12 60a6 6 0 0 0 6 6h70a6 6 0 0 0 6-6" stroke="#71717a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M56 12v40" stroke="#71717a" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text x="200" y="360" text-anchor="middle" fill="#a1a1aa" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600">No Cover Available</text>
+    <text x="200" y="390" text-anchor="middle" fill="#71717a" font-family="system-ui, -apple-system, sans-serif" font-size="14">Cover will appear here</text>
+</svg>
+

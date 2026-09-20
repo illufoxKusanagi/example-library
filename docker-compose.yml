@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: example-library:latest
+    container_name: library_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      APP_NAME: "Library App"
+      APP_ENV: "production"
+      APP_KEY: "base64:GPmciuEAe4YS/bofBewA/qlzw+sLXGUe2kBbUUz1jS8="
+      APP_DEBUG: "false"
+      APP_URL: "http://localhost:8080"
+      DB_CONNECTION: "sqlite"
+      RUN_MIGRATIONS: "true"
+      SEED_ON_DEPLOY: "true"
+    volumes:
+      - app_storage:/app/storage/app/public
+      - app_database:/app/database
+
+volumes:
+  app_storage:
+  app_database:

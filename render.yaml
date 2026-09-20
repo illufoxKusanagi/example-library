@@ -1,0 +1,22 @@
+services:
+    - type: web
+      name: library-app
+      runtime: docker
+      plan: free
+      region: oregon
+      healthCheckPath: /
+      envVars:
+          - key: APP_ENV
+            value: production
+          - key: APP_DEBUG
+            value: false
+          - key: LOG_CHANNEL
+            value: stderr
+          - key: RUN_MIGRATIONS
+            value: true
+          - key: SEED_ON_DEPLOY
+            value: true
+          - key: DB_CONNECTION
+            value: sqlite
+          - key: APP_KEY
+            generateValue: true
