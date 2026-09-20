@@ -43,6 +43,9 @@ RUN install-php-extensions \
     intl \
     opcache
 
+# Remove file capabilities to prevent EPERM (Operation not permitted) under Render's no_new_privs sandbox
+RUN setcap -r /usr/local/bin/frankenphp
+
 # Production environment defaults
 ENV APP_ENV="production"
 ENV APP_DEBUG="false"
