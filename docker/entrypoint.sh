@@ -14,15 +14,6 @@ php artisan package:discover --ansi || true
 # Create public storage symlink if it doesn't exist
 php artisan storage:link --force || true
 
-# Prepare SQLite database file if SQLite connection is used
-if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
-    if [ ! -f /app/database/database.sqlite ]; then
-        mkdir -p /app/database
-        touch /app/database/database.sqlite
-        chown -R www-data:www-data /app/database
-        chmod -R 775 /app/database
-    fi
-fi
 
 # Run database migrations and seeds (idempotent firstOrCreate)
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then

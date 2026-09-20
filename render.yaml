@@ -3,7 +3,7 @@ services:
       name: library-app
       runtime: docker
       plan: free
-      region: oregon
+      region: singapore
       healthCheckPath: /
       envVars:
           - key: APP_ENV
@@ -17,6 +17,8 @@ services:
           - key: SEED_ON_DEPLOY
             value: true
           - key: DB_CONNECTION
-            value: sqlite
+            value: pgsql
+          - key: DATABASE_URL
+            sync: false
           - key: APP_KEY
             generateValue: true
