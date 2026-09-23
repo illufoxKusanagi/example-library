@@ -122,12 +122,26 @@
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         @if (! $loan->isReturned())
-                                            <form method="POST" action="{{ route('books.return', $loan->book) }}" class="inline">
-                                                @csrf
-                                                <flux:button type="submit" size="xs" variant="primary">
-                                                    {{ __('Return Book') }}
-                                                </flux:button>
-                                            </form>
+                                            @if ($isAdmin)
+                                                <form method="POST" action="{{ route('books.return', $loan->book) }}" class="inline">
+                                                    @csrf
+                                                    <flux:button type="submit" size="xs" variant="primary">
+                                                        {{ __('Return Book') }}
+                                                    </flux:button>
+                                                </form>
+                                            @elseif ($loan->book->hasPendingReturnRequestFor(auth()->user()))
+                                                <flux:badge color="amber" size="xs">
+                                                    <flux:icon name="clock" class="size-3 mr-1 inline" />
+                                                    {{ __('Pending Return') }}
+                                                </flux:badge>
+                                            @else
+                                                <form method="POST" action="{{ route('books.request-return', $loan->book) }}" class="inline">
+                                                    @csrf
+                                                    <flux:button type="submit" size="xs" variant="primary">
+                                                        {{ __('Request Return') }}
+                                                    </flux:button>
+                                                </form>
+                                            @endif
                                         @else
                                             <span class="text-xs text-zinc-400">—</span>
                                         @endif

@@ -10,12 +10,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Book extends Model
 {
     /** @use HasFactory<BookFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'book_code',
@@ -53,6 +54,14 @@ class Book extends Model
     }
 
     /**
+     * @return HasMany<BookRequest, $this>
+     */
+    public function bookRequests(): HasMany
+    {
+        return $this->hasMany(BookRequest::class);
+    }
+
+    /**
      * Check if the book is currently borrowed by a specific user.
      */
     public function isRentedBy(?User $user): bool
@@ -64,6 +73,38 @@ class Book extends Model
         return $this->rentLogs()
             ->where('user_id', $user->id)
             ->whereNull('actual_return_date')
+            ->exists();
+    }
+
+    /**
+     * Check if a specific user has a pending loan request for this book.
+     */
+    public function hasPendingLoanRequestFor(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $this->bookRequests()
+            ->where('user_id', $user->id)
+            ->where('type', 'loan')
+            ->where('status', 'pending')
+            ->exists();
+    }
+
+    /**
+     * Check if a specific user has a pending return request for this book.
+     */
+    public function hasPendingReturnRequestFor(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $this->bookRequests()
+            ->where('user_id', $user->id)
+            ->where('type', 'return')
+            ->where('status', 'pending')
             ->exists();
     }
 
@@ -84,11 +125,11 @@ class Book extends Model
                     return $this->cover;
                 }
 
-                if (str_starts_with($this->cover, 'covers/')) {
-                    return asset('storage/'.$this->cover);
-                }
+                $relativePath = str_starts_with($this->cover, 'covers/')
+                    ? $this->cover
+                    : 'covers/' . $this->cover;
 
-                return asset('storage/covers/'.$this->cover);
+                return asset('storage/' . $relativePath);
             },
         );
     }
@@ -101,7 +142,7 @@ class Book extends Model
     protected function isAvailable(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->status === 'available',
+            get: fn() => $this->status === 'available',
         );
     }
 
@@ -165,8 +206,8 @@ class Book extends Model
                 $slug = $baseSlug;
                 $counter = 1;
 
-                while (static::where('slug', $slug)->exists()) {
-                    $slug = "{$baseSlug}-".strtolower($book->book_code ?: (string) $counter);
+                while (static::withTrashed()->where('slug', $slug)->exists()) {
+                    $slug = "{$baseSlug}-" . strtolower($book->book_code ?: (string) $counter);
                     $counter++;
                 }
 
@@ -180,8 +221,8 @@ class Book extends Model
                 $slug = $baseSlug;
                 $counter = 1;
 
-                while (static::where('slug', $slug)->where('id', '!=', $book->id)->exists()) {
-                    $slug = "{$baseSlug}-".strtolower($book->book_code ?: (string) $counter);
+                while (static::withTrashed()->where('slug', $slug)->where('id', '!=', $book->id)->exists()) {
+                    $slug = "{$baseSlug}-" . strtolower($book->book_code ?: (string) $counter);
                     $counter++;
                 }
 

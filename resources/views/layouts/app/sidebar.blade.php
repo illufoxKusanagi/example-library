@@ -15,6 +15,9 @@
                     <flux:sidebar.item icon="book-open-text" :href="route('books.index')" :current="request()->routeIs('books.index') || request()->routeIs('home')" wire:navigate>
                         {{ __('Books Catalog') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="folder" :href="route('categories.index')" :current="request()->routeIs('categories.*')" wire:navigate>
+                        {{ __('Categories') }}
+                    </flux:sidebar.item>
                     @if (auth()->check() && auth()->user()->isAdmin())
                         <flux:sidebar.item icon="plus" :href="route('books.create')" :current="request()->routeIs('books.create')" wire:navigate>
                             {{ __('Add New Book') }}
@@ -23,14 +26,40 @@
                 </flux:sidebar.group>
 
                 @auth
-                    <flux:sidebar.group :heading="__('Member Services')" class="grid mt-4">
-                        <flux:sidebar.item icon="arrow-path" :href="route('loans.index')" :current="request()->routeIs('loans.*')" wire:navigate>
-                            {{ auth()->user()->isAdmin() ? __('All Loans Management') : __('My Borrowed Books') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                            {{ __('Dashboard') }}
-                        </flux:sidebar.item>
-                    </flux:sidebar.group>
+                    @if (auth()->user()->isAdmin())
+                        <flux:sidebar.group :heading="__('Administration')" class="grid mt-4">
+                            <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                                {{ __('Dashboard') }}
+                            </flux:sidebar.item>
+                            @php
+                                $pendingRequestsCount = \App\Models\BookRequest::pending()->count();
+                            @endphp
+                            <flux:sidebar.item icon="inbox-arrow-down" :href="route('requests.index')" :current="request()->routeIs('requests.index')" wire:navigate>
+                                <span>{{ __('Requests') }}</span>
+                                @if ($pendingRequestsCount > 0)
+                                    <flux:badge size="xs" color="amber" class="ml-auto">{{ $pendingRequestsCount }}</flux:badge>
+                                @endif
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="arrow-path" :href="route('loans.index')" :current="request()->routeIs('loans.*')" wire:navigate>
+                                {{ __('Loans Management') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
+                                {{ __('Member Users') }}
+                            </flux:sidebar.item>
+                        </flux:sidebar.group>
+                    @else
+                        <flux:sidebar.group :heading="__('Member Services')" class="grid mt-4">
+                            <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                                {{ __('Dashboard') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="clock" :href="route('requests.my')" :current="request()->routeIs('requests.my')" wire:navigate>
+                                {{ __('My Requests') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="arrow-path" :href="route('loans.index')" :current="request()->routeIs('loans.*')" wire:navigate>
+                                {{ __('My Borrowed Books') }}
+                            </flux:sidebar.item>
+                        </flux:sidebar.group>
+                    @endif
                 @endauth
             </flux:sidebar.nav>
 

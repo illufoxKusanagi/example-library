@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\BookRequest;
 use App\Models\Category;
 use App\Models\RentLog;
 use App\Models\User;
@@ -39,6 +40,8 @@ class DashboardController extends Controller
                 ->take(4)
                 ->get();
 
+            $pendingRequests = BookRequest::pending()->count();
+
             return view('dashboard', [
                 'user' => $user,
                 'isAdmin' => true,
@@ -49,6 +52,7 @@ class DashboardController extends Controller
                 'overdueLoans' => $overdueLoans,
                 'totalMembers' => $totalMembers,
                 'totalCategories' => $totalCategories,
+                'pendingRequests' => $pendingRequests,
                 'recentLoans' => $recentLoans,
                 'recentBooks' => $recentBooks,
             ]);
@@ -64,6 +68,7 @@ class DashboardController extends Controller
         $activeLoansCount = $myActiveLoans->count();
         $totalBorrowedEver = $user->rentLogs()->count();
         $overdueLoansCount = $myActiveLoans->filter->isOverdue()->count();
+        $myPendingRequests = $user->bookRequests()->pending()->count();
 
         $recommendedBooks = Book::with('categories')
             ->where('status', 'available')
@@ -78,6 +83,7 @@ class DashboardController extends Controller
             'activeLoansCount' => $activeLoansCount,
             'totalBorrowedEver' => $totalBorrowedEver,
             'overdueLoansCount' => $overdueLoansCount,
+            'myPendingRequests' => $myPendingRequests,
             'recommendedBooks' => $recommendedBooks,
         ]);
     }

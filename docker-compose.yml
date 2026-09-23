@@ -1,26 +1,53 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: example-library:latest
-    container_name: library_app
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    environment:
-      APP_NAME: "Library App"
-      APP_ENV: "production"
-      APP_KEY: "base64:GPmciuEAe4YS/bofBewA/qlzw+sLXGUe2kBbUUz1jS8="
-      APP_DEBUG: "false"
-      APP_URL: "http://localhost:8080"
-      DB_CONNECTION: "sqlite"
-      RUN_MIGRATIONS: "true"
-      SEED_ON_DEPLOY: "true"
-    volumes:
-      - app_storage:/app/storage/app/public
-      - app_database:/app/database
-
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: "example-library:latest"
+        container_name: library_app
+        restart: unless-stopped
+        ports:
+            - "8000:80"
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            APP_NAME: "Library App"
+            APP_ENV: local
+            APP_KEY: "${APP_KEY:-base64:GPmciuEAe4YS/bofBewA/qlzw+sLXGUe2kBbUUz1jS8=}"
+            APP_DEBUG: "true"
+            PORT: "80"
+            APP_URL: "http://localhost:8000"
+            DB_CONNECTION: pgsql
+            DB_HOST: db
+            DB_PORT: "5432"
+            DB_DATABASE: example_library
+            DB_USERNAME: postgres
+            DB_PASSWORD: postgres
+            DATABASE_URL: "postgresql://postgres:postgres@db:5432/example_library"
+            RUN_MIGRATIONS: "true"
+            SEED_ON_DEPLOY: "true"
+        volumes:
+            - .:/app
+            - ./docker/entrypoint.sh:/usr/local/bin/docker-entrypoint
+    db:
+        image: "postgres:16-alpine"
+        container_name: library_postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: example_library
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - "5432:5432"
+        volumes:
+            - "postgres_data:/var/lib/postgresql/data"
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - "pg_isready -U postgres -d example_library"
+            interval: 5s
+            timeout: 5s
+            retries: 5
 volumes:
-  app_storage:
-  app_database:
+    postgres_data: null

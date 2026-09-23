@@ -32,7 +32,10 @@
 
             @if (auth()->check() && auth()->user()->isAdmin())
                 <div class="flex items-center gap-2">
-                    <flux:button :href="route('books.create')" variant="primary" icon="plus">
+                    <flux:button :href="route('books.trashed')" variant="ghost" icon="trash" size="sm">
+                        {{ __('Trash') }}
+                    </flux:button>
+                    <flux:button :href="route('books.create')" variant="primary" icon="plus" size="sm">
                         {{ __('Add Book') }}
                     </flux:button>
                 </div>

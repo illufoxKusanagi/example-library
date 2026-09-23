@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\RentLog;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class RentController extends Controller
@@ -47,30 +49,35 @@ class RentController extends Controller
     {
         $user = $request->user();
 
-        if ($book->status !== 'available') {
-            return back()->with('error', __('This book is currently unavailable for borrowing.'));
-        }
+        return DB::transaction(function () use ($user, $book) {
+            $lockedBook = Book::whereKey($book->id)->lockForUpdate()->firstOrFail();
+            $lockedUser = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
 
-        if ($user->activeLoansCount() >= 3) {
-            return back()->with('error', __('You have reached the maximum active loan limit of 3 books. Please return a book first.'));
-        }
+            if ($lockedBook->status !== 'available') {
+                return back()->with('error', __('This book is currently unavailable for borrowing.'));
+            }
 
-        $dueDate = now()->addDays(7);
+            if ($lockedUser->activeLoansCount() >= 3) {
+                return back()->with('error', __('You have reached the maximum active loan limit of 3 books. Please return a book first.'));
+            }
 
-        RentLog::create([
-            'user_id' => $user->id,
-            'book_id' => $book->id,
-            'rent_date' => now()->toDateString(),
-            'return_date' => $dueDate->toDateString(),
-            'status' => 'rented',
-        ]);
+            $dueDate = now()->addDays(7);
 
-        $book->update(['status' => 'unavailable']);
+            RentLog::create([
+                'user_id' => $lockedUser->id,
+                'book_id' => $lockedBook->id,
+                'rent_date' => now()->toDateString(),
+                'return_date' => $dueDate->toDateString(),
+                'status' => 'rented',
+            ]);
 
-        return back()->with('success', __('You have borrowed ":title". Due date: :date.', [
-            'title' => $book->title,
-            'date' => $dueDate->format('M d, Y'),
-        ]));
+            $lockedBook->update(['status' => 'unavailable']);
+
+            return back()->with('success', __('You have borrowed ":title". Due date: :date.', [
+                'title' => $lockedBook->title,
+                'date' => $dueDate->format('M d, Y'),
+            ]));
+        });
     }
 
     /**
@@ -80,27 +87,31 @@ class RentController extends Controller
     {
         $user = $request->user();
 
-        $rentLogQuery = $book->rentLogs()->active();
+        return DB::transaction(function () use ($user, $book) {
+            $lockedBook = Book::withTrashed()->lockForUpdate()->findOrFail($book->id);
 
-        if (! $user->isAdmin()) {
-            $rentLogQuery->where('user_id', $user->id);
-        }
+            $rentLogQuery = $lockedBook->rentLogs()->active()->lockForUpdate();
 
-        $rentLog = $rentLogQuery->latest('id')->first();
+            if (! $user->isAdmin()) {
+                $rentLogQuery->where('user_id', $user->id);
+            }
 
-        if (! $rentLog) {
-            return back()->with('error', __('No active borrowing record found for this book.'));
-        }
+            $rentLog = $rentLogQuery->latest('id')->first();
 
-        $rentLog->update([
-            'actual_return_date' => now()->toDateString(),
-            'status' => 'returned',
-        ]);
+            if (! $rentLog) {
+                return back()->with('error', __('No active borrowing record found for this book.'));
+            }
 
-        $book->update(['status' => 'available']);
+            $rentLog->update([
+                'actual_return_date' => now()->toDateString(),
+                'status' => 'returned',
+            ]);
 
-        return back()->with('success', __('":title" has been successfully returned to the library.', [
-            'title' => $book->title,
-        ]));
+            $lockedBook->update(['status' => 'available']);
+
+            return back()->with('success', __('":title" has been successfully returned to the library.', [
+                'title' => $lockedBook->title,
+            ]));
+        });
     }
 }
