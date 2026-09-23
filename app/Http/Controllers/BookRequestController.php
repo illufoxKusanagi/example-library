@@ -22,8 +22,8 @@ class BookRequestController extends Controller
         $type = $request->string('type')->toString();
 
         $query = BookRequest::with([
-            'user' => fn ($query) => $query->withTrashed(),
-            'book' => fn ($query) => $query->withTrashed(),
+            'user' => fn($query) => $query->withTrashed(),
+            'book' => fn($query) => $query->withTrashed(),
         ])->latest('id');
 
         if ($status) {
@@ -231,14 +231,30 @@ class BookRequestController extends Controller
      */
     public function myRequests(Request $request): View
     {
-        $requests = $request->user()
-            ->bookRequests()
-            ->with(['book' => fn ($query) => $query->withTrashed()])
-            ->latest('id')
-            ->paginate(15);
+        $status = $request->string('status')->toString();
+        $type = $request->string('type')->toString();
+
+        $user = $request->user();
+        $query = $user->bookRequests()
+            ->with(['book' => fn($query) => $query->withTrashed()])
+            ->latest('id');
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        $requests = $query->paginate(15)->withQueryString();
+        $pendingCount = $user->bookRequests()->pending()->count();
 
         return view('requests.my-requests', [
             'requests' => $requests,
+            'currentStatus' => $status,
+            'currentType' => $type,
+            'pendingCount' => $pendingCount,
         ]);
     }
 }

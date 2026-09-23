@@ -199,6 +199,35 @@ test('client can view my requests page', function () {
     $response->assertSee('Borrow Request');
 });
 
+test('client can filter my requests by status', function () {
+    $client = User::factory()->create(['role' => 'client']);
+    $book1 = Book::factory()->create(['title' => 'Chainsaw Man']);
+    $book2 = Book::factory()->create(['title' => 'Spy x Family']);
+
+    BookRequest::create([
+        'user_id' => $client->id,
+        'book_id' => $book1->id,
+        'type' => 'loan',
+        'status' => 'pending',
+        'request_date' => now(),
+    ]);
+
+    BookRequest::create([
+        'user_id' => $client->id,
+        'book_id' => $book2->id,
+        'type' => 'loan',
+        'status' => 'accepted',
+        'request_date' => now(),
+    ]);
+
+    $response = $this->actingAs($client)
+        ->get(route('requests.my', ['status' => 'pending']));
+
+    $response->assertOk();
+    $response->assertSee('Chainsaw Man');
+    $response->assertDontSee('Spy x Family');
+});
+
 test('admin cannot accept loan request if user is soft-deleted', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $client = User::factory()->create(['role' => 'client']);

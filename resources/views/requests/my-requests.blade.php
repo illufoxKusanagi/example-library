@@ -35,6 +35,22 @@
             </flux:button>
         </div>
 
+        {{-- Filters --}}
+        <div class="flex flex-wrap items-center gap-2">
+            <flux:button :href="route('requests.my')" size="sm" :variant="empty($currentStatus) ? 'filled' : 'ghost'">
+                {{ __('All Requests') }}
+            </flux:button>
+            <flux:button :href="route('requests.my', ['status' => 'pending'])" size="sm" :variant="$currentStatus === 'pending' ? 'filled' : 'ghost'">
+                {{ __('Pending') }} @if ($pendingCount > 0) ({{ $pendingCount }}) @endif
+            </flux:button>
+            <flux:button :href="route('requests.my', ['status' => 'accepted'])" size="sm" :variant="$currentStatus === 'accepted' ? 'filled' : 'ghost'">
+                {{ __('Accepted') }}
+            </flux:button>
+            <flux:button :href="route('requests.my', ['status' => 'rejected'])" size="sm" :variant="$currentStatus === 'rejected' ? 'filled' : 'ghost'">
+                {{ __('Rejected') }}
+            </flux:button>
+        </div>
+
         {{-- Requests Table --}}
         @if ($requests->isNotEmpty())
             <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-700/80 dark:bg-zinc-900">
