@@ -56,7 +56,7 @@
 
         @if ($isAdmin)
             {{-- Admin Stats Grid --}}
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 {{-- Total Books --}}
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-700/80 dark:bg-zinc-900">
                     <div class="flex items-center justify-between">
@@ -78,6 +78,27 @@
                         </span>
                         <span>•</span>
                         <span>{{ $rentedBooks }} {{ __('on loan') }}</span>
+                    </div>
+                </div>
+
+                {{-- Pending Requests --}}
+                <div class="rounded-xl border {{ $pendingRequests > 0 ? 'border-amber-200 bg-amber-50/30 dark:border-amber-900/60 dark:bg-amber-950/20' : 'border-zinc-200 bg-white dark:border-zinc-700/80 dark:bg-zinc-900' }} p-5 shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <flux:text class="text-xs font-semibold uppercase tracking-wider {{ $pendingRequests > 0 ? 'text-amber-700 dark:text-amber-400 font-semibold' : 'text-zinc-500 dark:text-zinc-400' }}">
+                            {{ __('Pending Requests') }}
+                        </flux:text>
+                        <div class="rounded-lg {{ $pendingRequests > 0 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' }} p-2">
+                            <flux:icon name="inbox-arrow-down" class="size-4" />
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-baseline gap-2">
+                        <span class="text-3xl font-bold tracking-tight {{ $pendingRequests > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-900 dark:text-white' }}">{{ $pendingRequests }}</span>
+                        <span class="text-xs {{ $pendingRequests > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-500 dark:text-zinc-400' }}">{{ __('awaiting action') }}</span>
+                    </div>
+                    <div class="mt-2 text-xs">
+                        <a href="{{ route('requests.index', ['status' => 'pending']) }}" class="text-amber-600 hover:underline dark:text-amber-400 font-medium">
+                            {{ __('Review requests →') }}
+                        </a>
                     </div>
                 </div>
 
@@ -284,8 +305,13 @@
                         </flux:text>
                     </div>
 
-                    <div class="flex items-center gap-3">
-                        <flux:button :href="route('books.index')" variant="primary" icon="book-open">
+                    <div class="flex items-center gap-2">
+                        @if ($myPendingRequests > 0)
+                            <flux:button :href="route('requests.my')" variant="filled" size="sm" icon="clock">
+                                {{ __(':count Pending Request(s)', ['count' => $myPendingRequests]) }}
+                            </flux:button>
+                        @endif
+                        <flux:button :href="route('books.index')" variant="primary" icon="book-open" size="sm">
                             {{ __('Discover Books') }}
                         </flux:button>
                     </div>
@@ -356,12 +382,19 @@
                                 </div>
 
                                 <div class="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800 flex justify-end">
-                                    <form method="POST" action="{{ route('books.return', $loan->book) }}">
-                                        @csrf
-                                        <flux:button type="submit" size="sm" variant="filled" icon="arrow-uturn-left">
-                                            {{ __('Return Book') }}
-                                        </flux:button>
-                                    </form>
+                                    @if ($loan->book->hasPendingReturnRequestFor(auth()->user()))
+                                        <flux:badge color="amber" size="sm">
+                                            <flux:icon name="clock" class="size-3 mr-1 inline" />
+                                            {{ __('Return Pending Approval') }}
+                                        </flux:badge>
+                                    @else
+                                        <form method="POST" action="{{ route('books.request-return', $loan->book) }}">
+                                            @csrf
+                                            <flux:button type="submit" size="sm" variant="filled" icon="arrow-uturn-left">
+                                                {{ __('Request Return') }}
+                                            </flux:button>
+                                        </form>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach

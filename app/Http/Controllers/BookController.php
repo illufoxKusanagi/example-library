@@ -148,12 +148,60 @@ class BookController extends Controller
     }
 
     /**
-     * Remove the specified book from storage.
+     * Remove the specified book from storage (soft-delete).
      */
     public function destroy(Book $book): RedirectResponse
     {
         abort_unless(auth()->check() && auth()->user()->isAdmin(), 403, __('Unauthorized. Only administrators can delete books.'));
 
+        $title = $book->title;
+        $book->delete();
+
+        return redirect()
+            ->route('books.index')
+            ->with('success', __('Book ":title" moved to trash.', ['title' => $title]));
+    }
+
+    /**
+     * Display a listing of soft-deleted books.
+     */
+    public function trashed(): View
+    {
+        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403, __('Unauthorized. Only administrators can view deleted books.'));
+
+        $books = Book::onlyTrashed()
+            ->with('categories')
+            ->latest('deleted_at')
+            ->paginate(12);
+
+        return view('books.trashed', [
+            'books' => $books,
+        ]);
+    }
+
+    /**
+     * Restore the specified soft-deleted book.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403, __('Unauthorized. Only administrators can restore books.'));
+
+        $book = Book::onlyTrashed()->findOrFail($id);
+        $book->restore();
+
+        return redirect()
+            ->route('books.trashed')
+            ->with('success', __('Book ":title" restored successfully.', ['title' => $book->title]));
+    }
+
+    /**
+     * Permanently delete the specified soft-deleted book.
+     */
+    public function forceDelete(int $id): RedirectResponse
+    {
+        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403, __('Unauthorized. Only administrators can permanently delete books.'));
+
+        $book = Book::onlyTrashed()->findOrFail($id);
         $title = $book->title;
 
         if ($book->cover && Storage::disk('public')->exists('covers/'.$book->cover)) {
@@ -161,10 +209,10 @@ class BookController extends Controller
         }
 
         $book->categories()->detach();
-        $book->delete();
+        $book->forceDelete();
 
         return redirect()
-            ->route('books.index')
-            ->with('success', __('Book ":title" deleted successfully.', ['title' => $title]));
+            ->route('books.trashed')
+            ->with('success', __('Book ":title" permanently deleted.', ['title' => $title]));
     }
 }

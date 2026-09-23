@@ -14,6 +14,8 @@ new #[Title('Profile settings')] class extends Component {
 
     public string $name = '';
     public string $email = '';
+    public string $phone = '';
+    public string $address = '';
 
     /**
      * Mount the component.
@@ -22,6 +24,8 @@ new #[Title('Profile settings')] class extends Component {
     {
         $this->name = Auth::user()->name;
         $this->email = Auth::user()->email;
+        $this->phone = Auth::user()->phone ?? '';
+        $this->address = Auth::user()->address ?? '';
     }
 
     /**
@@ -106,6 +110,10 @@ new #[Title('Profile settings')] class extends Component {
                     </div>
                 @endif
             </div>
+
+            <flux:input wire:model="phone" :label="__('Phone Number')" type="tel" autocomplete="tel" placeholder="+65 9123 4567" />
+
+            <flux:textarea wire:model="address" :label="__('Home Address')" rows="3" placeholder="{{ __('Street, City, Postal Code') }}" />
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">

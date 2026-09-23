@@ -14,9 +14,16 @@ fi
 
 # Ensure APP_KEY exists so encrypter and session cookies never fail
 if [ -z "$APP_KEY" ]; then
+    if [ "${APP_ENV:-production}" = "production" ]; then
+        echo "Error: APP_KEY environment variable is required in production!" >&2
+        exit 1
+    fi
     echo "Notice: APP_KEY not provided, generating fallback key..."
     export APP_KEY=$(php artisan key:generate --show --no-interaction)
 fi
+
+# Ensure stale dev hot-reload flag is removed in container
+rm -f public/hot || true
 
 # Clean stale caches and rediscover packages for production environment
 php artisan package:discover --ansi || true
@@ -32,9 +39,15 @@ if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     fi
 fi
 
-# Cache configuration, routes, and Blade views for production speed
-php artisan config:cache || true
-php artisan route:cache || true
-php artisan view:cache || true
+# Cache in production; clear stale caches in development
+if [ "${APP_ENV:-production}" = "production" ]; then
+    php artisan config:cache || true
+    php artisan route:cache || true
+    php artisan view:cache || true
+else
+    php artisan config:clear || true
+    php artisan route:clear || true
+    php artisan view:clear || true
+fi
 
 exec "$@"

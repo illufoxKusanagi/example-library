@@ -30,6 +30,25 @@
                 placeholder="email@example.com"
             />
 
+            <!-- Phone Number (Optional) -->
+            <flux:input
+                name="phone"
+                :label="__('Phone Number (Optional)')"
+                :value="old('phone')"
+                type="tel"
+                autocomplete="tel"
+                placeholder="+65 9123 4567"
+            />
+
+            <!-- Address (Optional) -->
+            <flux:input
+                name="address"
+                :label="__('Address (Optional)')"
+                :value="old('address')"
+                type="text"
+                placeholder="{{ __('Street, City, Postal Code') }}"
+            />
+
             <!-- Password -->
             <flux:input
                 name="password"

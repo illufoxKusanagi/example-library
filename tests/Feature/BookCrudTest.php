@@ -247,41 +247,50 @@ test('client cannot delete a book', function () {
     $response->assertForbidden();
 });
 
-test('authenticated client can borrow an available book', function () {
+test('client cannot directly borrow without admin role', function () {
     $client = User::factory()->create(['role' => 'client']);
     $book = Book::where('status', 'available')->first();
 
     $response = $this->actingAs($client)->post(route('books.borrow', $book));
+
+    $response->assertForbidden();
+});
+
+test('admin can directly borrow an available book', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $book = Book::where('status', 'available')->first();
+
+    $response = $this->actingAs($admin)->post(route('books.borrow', $book));
 
     $response->assertSessionHas('success');
     $book->refresh();
 
     expect($book->status)->toBe('unavailable');
-    expect($book->isRentedBy($client))->toBeTrue();
+    expect($book->isRentedBy($admin))->toBeTrue();
 
-    $rentLog = RentLog::where('book_id', $book->id)->where('user_id', $client->id)->first();
+    $rentLog = RentLog::where('book_id', $book->id)->where('user_id', $admin->id)->first();
     expect($rentLog)->not->toBeNull();
     expect($rentLog->status)->toBe('rented');
     expect($rentLog->actual_return_date)->toBeNull();
 });
 
-test('client cannot borrow an unavailable book', function () {
-    $client = User::factory()->create(['role' => 'client']);
+test('admin cannot directly borrow an unavailable book', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
     $book = Book::where('status', 'available')->first();
     $book->update(['status' => 'unavailable']);
 
-    $response = $this->actingAs($client)->post(route('books.borrow', $book));
+    $response = $this->actingAs($admin)->post(route('books.borrow', $book));
 
     $response->assertSessionHas('error');
 });
 
-test('client cannot borrow more than 3 books', function () {
-    $client = User::factory()->create(['role' => 'client']);
+test('admin cannot directly borrow more than 3 books', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
     $books = Book::where('status', 'available')->take(3)->get();
 
     foreach ($books as $b) {
         RentLog::create([
-            'user_id' => $client->id,
+            'user_id' => $admin->id,
             'book_id' => $b->id,
             'rent_date' => now()->toDateString(),
             'return_date' => now()->addDays(7)->toDateString(),
@@ -290,33 +299,42 @@ test('client cannot borrow more than 3 books', function () {
         $b->update(['status' => 'unavailable']);
     }
 
-    expect($client->activeLoansCount())->toBe(3);
+    expect($admin->activeLoansCount())->toBe(3);
 
     $fourthBook = Book::where('status', 'available')->first();
-    $response = $this->actingAs($client)->post(route('books.borrow', $fourthBook));
+    $response = $this->actingAs($admin)->post(route('books.borrow', $fourthBook));
 
     $response->assertSessionHas('error');
     $fourthBook->refresh();
     expect($fourthBook->status)->toBe('available');
 });
 
-test('client can return a borrowed book', function () {
+test('client cannot directly return without admin role', function () {
     $client = User::factory()->create(['role' => 'client']);
     $book = Book::where('status', 'available')->first();
 
-    $this->actingAs($client)->post(route('books.borrow', $book));
+    $response = $this->actingAs($client)->post(route('books.return', $book));
+
+    $response->assertForbidden();
+});
+
+test('admin can directly return a borrowed book', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $book = Book::where('status', 'available')->first();
+
+    $this->actingAs($admin)->post(route('books.borrow', $book));
     $book->refresh();
     expect($book->status)->toBe('unavailable');
 
-    $response = $this->actingAs($client)->post(route('books.return', $book));
+    $response = $this->actingAs($admin)->post(route('books.return', $book));
 
     $response->assertSessionHas('success');
     $book->refresh();
 
     expect($book->status)->toBe('available');
-    expect($book->isRentedBy($client))->toBeFalse();
+    expect($book->isRentedBy($admin))->toBeFalse();
 
-    $rentLog = RentLog::where('book_id', $book->id)->where('user_id', $client->id)->first();
+    $rentLog = RentLog::where('book_id', $book->id)->where('user_id', $admin->id)->first();
     expect($rentLog->isReturned())->toBeTrue();
 });
 

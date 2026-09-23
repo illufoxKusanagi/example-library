@@ -77,24 +77,49 @@
                     @if (auth()->user()->isAdmin())
                         <flux:button :href="route('books.edit', $book)" size="xs" variant="subtle" icon="pencil-square" title="{{ __('Edit') }}" />
 
-                        <form method="POST" action="{{ route('books.destroy', $book) }}" onsubmit="return confirm('{{ __('Are you sure you want to delete \":title\"?', ['title' => $book->title]) }}');" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <flux:button type="submit" size="xs" variant="danger" icon="trash" title="{{ __('Delete') }}" />
-                        </form>
+                        <flux:modal.trigger name="delete-book-{{ $book->id }}">
+                            <flux:button size="xs" variant="danger" icon="trash" title="{{ __('Delete') }}" />
+                        </flux:modal.trigger>
+
+                        <flux:modal name="delete-book-{{ $book->id }}" class="min-w-[22rem] max-w-md space-y-6 text-left">
+                            <div>
+                                <flux:heading size="lg">{{ __('Delete Book') }}</flux:heading>
+                                <flux:subheading class="mt-2">
+                                    {{ __('Are you sure you want to delete ":title"? This book will be moved to trash.', ['title' => $book->title]) }}
+                                </flux:subheading>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <flux:modal.close>
+                                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                                </flux:modal.close>
+                                <form method="POST" action="{{ route('books.destroy', $book) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <flux:button type="submit" variant="danger">{{ __('Delete') }}</flux:button>
+                                </form>
+                            </div>
+                        </flux:modal>
                     @else
-                        @if ($book->status === 'available')
-                            <form method="POST" action="{{ route('books.borrow', $book) }}" class="inline">
+                        @if ($book->hasPendingLoanRequestFor(auth()->user()))
+                            <flux:badge size="xs" color="amber">
+                                {{ __('Request Pending') }}
+                            </flux:badge>
+                        @elseif ($book->hasPendingReturnRequestFor(auth()->user()))
+                            <flux:badge size="xs" color="purple">
+                                {{ __('Return Pending') }}
+                            </flux:badge>
+                        @elseif ($book->status === 'available')
+                            <form method="POST" action="{{ route('books.request-loan', $book) }}" class="inline">
                                 @csrf
                                 <flux:button type="submit" size="xs" variant="primary">
-                                    {{ __('Borrow') }}
+                                    {{ __('Request Loan') }}
                                 </flux:button>
                             </form>
                         @elseif ($book->isRentedBy(auth()->user()))
-                            <form method="POST" action="{{ route('books.return', $book) }}" class="inline">
+                            <form method="POST" action="{{ route('books.request-return', $book) }}" class="inline">
                                 @csrf
                                 <flux:button type="submit" size="xs" variant="filled">
-                                    {{ __('Return') }}
+                                    {{ __('Request Return') }}
                                 </flux:button>
                             </form>
                         @endif
