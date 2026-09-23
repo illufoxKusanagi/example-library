@@ -14,10 +14,6 @@ fi
 
 # Ensure APP_KEY exists so encrypter and session cookies never fail
 if [ -z "$APP_KEY" ]; then
-    if [ "${APP_ENV:-production}" = "production" ]; then
-        echo "Error: APP_KEY environment variable is required in production!" >&2
-        exit 1
-    fi
     echo "Notice: APP_KEY not provided, generating fallback key..."
     export APP_KEY=$(php artisan key:generate --show --no-interaction)
 fi
