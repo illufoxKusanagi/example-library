@@ -21,7 +21,10 @@ class BookRequestController extends Controller
         $status = $request->string('status')->toString();
         $type = $request->string('type')->toString();
 
-        $query = BookRequest::with(['user', 'book'])->latest('id');
+        $query = BookRequest::with([
+            'user' => fn ($query) => $query->withTrashed(),
+            'book' => fn ($query) => $query->withTrashed(),
+        ])->latest('id');
 
         if ($status) {
             $query->where('status', $status);
@@ -230,7 +233,7 @@ class BookRequestController extends Controller
     {
         $requests = $request->user()
             ->bookRequests()
-            ->with('book')
+            ->with(['book' => fn ($query) => $query->withTrashed()])
             ->latest('id')
             ->paginate(15);
 

@@ -125,14 +125,9 @@ class Book extends Model
                     return $this->cover;
                 }
 
-                if (str_starts_with($this->cover, 'covers/')) {
-                    return asset('storage/'.$this->cover);
-                }
                 $relativePath = str_starts_with($this->cover, 'covers/')
                     ? $this->cover
                     : 'covers/'.$this->cover;
-
-                return asset('storage/covers/'.$this->cover);
 
                 return asset('storage/'.$relativePath);
             },
@@ -211,7 +206,7 @@ class Book extends Model
                 $slug = $baseSlug;
                 $counter = 1;
 
-                while (static::where('slug', $slug)->exists()) {
+                while (static::withTrashed()->where('slug', $slug)->exists()) {
                     $slug = "{$baseSlug}-".strtolower($book->book_code ?: (string) $counter);
                     $counter++;
                 }
@@ -226,7 +221,7 @@ class Book extends Model
                 $slug = $baseSlug;
                 $counter = 1;
 
-                while (static::where('slug', $slug)->where('id', '!=', $book->id)->exists()) {
+                while (static::withTrashed()->where('slug', $slug)->where('id', '!=', $book->id)->exists()) {
                     $slug = "{$baseSlug}-".strtolower($book->book_code ?: (string) $counter);
                     $counter++;
                 }
