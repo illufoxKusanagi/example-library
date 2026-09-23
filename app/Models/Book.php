@@ -127,9 +127,9 @@ class Book extends Model
 
                 $relativePath = str_starts_with($this->cover, 'covers/')
                     ? $this->cover
-                    : 'covers/'.$this->cover;
+                    : 'covers/' . $this->cover;
 
-                return asset('storage/'.$relativePath);
+                return asset('storage/' . $relativePath);
             },
         );
     }
@@ -142,7 +142,7 @@ class Book extends Model
     protected function isAvailable(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->status === 'available',
+            get: fn() => $this->status === 'available',
         );
     }
 
@@ -207,7 +207,7 @@ class Book extends Model
                 $counter = 1;
 
                 while (static::withTrashed()->where('slug', $slug)->exists()) {
-                    $slug = "{$baseSlug}-".strtolower($book->book_code ?: (string) $counter);
+                    $slug = "{$baseSlug}-" . strtolower($book->book_code ?: (string) $counter);
                     $counter++;
                 }
 
@@ -222,7 +222,7 @@ class Book extends Model
                 $counter = 1;
 
                 while (static::withTrashed()->where('slug', $slug)->where('id', '!=', $book->id)->exists()) {
-                    $slug = "{$baseSlug}-".strtolower($book->book_code ?: (string) $counter);
+                    $slug = "{$baseSlug}-" . strtolower($book->book_code ?: (string) $counter);
                     $counter++;
                 }
 
